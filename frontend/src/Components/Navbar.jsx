@@ -27,10 +27,8 @@ function Navbar() {
     (state) => state.user
   );
 
-  // USER NAME
   const fullName = user?.name || user?.fullName || "";
 
-  // USER INITIALS
   const getInitials = (name = "") => {
     const words = name.trim().split(/\s+/).filter(Boolean);
 
@@ -47,13 +45,12 @@ function Navbar() {
 
   const initials = getInitials(fullName);
 
-  // CLOSE MENUS
   const closeMenu = () => {
     setMenuOpen(false);
     setProfileOpen(false);
   };
 
-  // CLICK OUTSIDE DROPDOWN
+  // Close profile dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -67,11 +64,14 @@ function Navbar() {
     document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
     };
   }, []);
 
-  // LOGOUT
+  // Logout
   const handleLogout = async () => {
     try {
       await dispatch(logoutUser()).unwrap();
@@ -83,7 +83,7 @@ function Navbar() {
     }
   };
 
-  // DESKTOP LINK STYLE
+  // Desktop navigation style
   const navLinkClass = ({ isActive }) =>
     `transition-colors duration-200 ${
       isActive
@@ -91,7 +91,7 @@ function Navbar() {
         : "text-gray-600 hover:text-indigo-600"
     }`;
 
-  // MOBILE LINK STYLE
+  // Mobile navigation style
   const mobileLinkClass = ({ isActive }) =>
     `block rounded-lg px-4 py-3 transition-colors duration-200 ${
       isActive
@@ -127,9 +127,15 @@ function Navbar() {
           </NavLink>
 
           {authInitialized && isAuth && (
-            <NavLink to="/templates" className={navLinkClass}>
-              Templates
-            </NavLink>
+            <>
+              <NavLink to="/templates" className={navLinkClass}>
+                Templates
+              </NavLink>
+
+              <NavLink to="/my-invoices" className={navLinkClass}>
+                My Invoices
+              </NavLink>
+            </>
           )}
 
           <NavLink to="/about" className={navLinkClass}>
@@ -214,6 +220,15 @@ function Navbar() {
                       My Account
                     </Link>
 
+                    <NavLink
+                      to="/my-invoices"
+                      onClick={closeMenu}
+                      className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-gray-700 transition hover:bg-gray-50"
+                    >
+                      <FaFileInvoice className="text-gray-400" />
+                      My Invoices
+                    </NavLink>
+
                     <button
                       type="button"
                       onClick={handleLogout}
@@ -264,13 +279,24 @@ function Navbar() {
             </NavLink>
 
             {authInitialized && isAuth && (
-              <NavLink
-                to="/templates"
-                className={mobileLinkClass}
-                onClick={closeMenu}
-              >
-                Templates
-              </NavLink>
+              <>
+                <NavLink
+                  to="/templates"
+                  className={mobileLinkClass}
+                  onClick={closeMenu}
+                >
+                  Templates
+                </NavLink>
+
+                <NavLink
+                  to="/my-invoices"
+                  className={mobileLinkClass}
+                  onClick={closeMenu}
+                >
+                  <FaFileInvoice className="mr-2 inline" />
+                  My Invoices
+                </NavLink>
+              </>
             )}
 
             <NavLink
