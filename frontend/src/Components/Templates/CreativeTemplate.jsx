@@ -1,4 +1,3 @@
-
 const CreativeTemplate = ({ invoice = {} }) => {
   const items = invoice.items || [];
   const subtotal = items.reduce(
