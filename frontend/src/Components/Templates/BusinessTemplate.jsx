@@ -1,4 +1,4 @@
-
+// this is business template 
 const BusinessTemplate = ({ invoice = {} }) => {
   const business = invoice.business || {};
   const client = invoice.client || {};
