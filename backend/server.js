@@ -18,14 +18,12 @@ const apiRoutes = require("./Routes");
 
 const app = express();
 
-// Allowed frontend URLs
 const allowedOrigins = [
   "https://invoice-generator-five-ashen.vercel.app",
   "http://localhost:5173",
 ];
 
-// CORS configuration
-const corsOptions = {
+app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true);
@@ -34,14 +32,11 @@ const corsOptions = {
     console.log("Blocked by CORS:", origin);
     return callback(new Error("Not allowed by CORS"));
   },
-
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-};
+}));
 
-// Middleware
-app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -54,18 +49,31 @@ app.get("/", (req, res) => {
   });
 });
 
-// Temporary deployment test
-app.get("/test-auth", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Backend routing is working",
-  });
-});
-
 // API routes
 app.use("/", apiRoutes);
 
-// Server configuration
+// Verify that authentication routes are registered
+app.get("/test-auth", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Auth router is mounted",
+    endpoints: [
+      "POST /auth/signup",
+      "POST /auth/login",
+      "GET /auth/me",
+      "POST /auth/logout",
+    ],
+  });
+});
+
+// Handle unknown routes
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route not found: ${req.method} ${req.originalUrl}`,
+  });
+});
+
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
