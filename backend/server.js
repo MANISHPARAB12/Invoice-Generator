@@ -20,7 +20,7 @@ const app = express();
 
 // Allowed frontend URLs
 const allowedOrigins = [
-  "https://invoice-generator-five-ashen.vercel.app/",
+  "https://invoice-generator-five-ashen.vercel.app",
   "http://localhost:5173",
 ];
 
