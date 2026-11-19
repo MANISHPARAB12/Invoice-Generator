@@ -1,7 +1,8 @@
+
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: `${import.meta.env.VITE_API}/auth`,
+  baseURL: `${import.meta.env.VITE_API.replace(/\/+$/, "")}/auth`,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
