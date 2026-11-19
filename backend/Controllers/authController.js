@@ -11,15 +11,13 @@ const generateToken = (userId) => {
   );
 };
 
-
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  secure: true,
+  sameSite: "none",
   maxAge: 7 * 24 * 60 * 60 * 1000,
   path: "/",
 };
-
 
 // SIGNUP
 exports.signup = async (req, res) => {
@@ -138,7 +136,12 @@ exports.login = async (req, res) => {
 
 // LOGOUT
 exports.logout = (req, res) => {
-  res.clearCookie("token", cookieOptions);
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  });
 
   return res.status(200).json({
     success: true,
