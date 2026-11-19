@@ -8,13 +8,15 @@ dns.setServers(["8.8.8.8", "8.8.4.4"]);
 require("dotenv").config({
   path: ".env.production",
 });
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("JWT_SECRET loaded:", !!process.env.JWT_SECRET);
 
 const Connection = require("./Config/db");
 const apiRoutes = require("./Routes");
 
 const app = express();
 
-// Allowed frontend URLs
+// Allowed frontend 
 const allowedOrigins = [
   "https://invoice-generator-lake-phi.vercel.app",
   "http://localhost:5173",
@@ -56,7 +58,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // API Routes
-app.use("/api", apiRoutes);
+app.use("/", apiRoutes);
 
 // Health Check
 app.get("/", (req, res) => {
