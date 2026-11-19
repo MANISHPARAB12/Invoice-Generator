@@ -1,29 +1,45 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { Download, FileText, LoaderCircle } from "lucide-react";
 
 import invoiceServices from "../Services/invoiceServices";
 
 export default function MyInvoices() {
+  const navigate = useNavigate();
+
+  const { isAuth, authInitialized } = useSelector(
+    (state) => state.user
+  );
+
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [downloadingId, setDownloadingId] = useState(null);
 
-  const fetchInvoices = async () => {
+  // Fetch invoices
+  const fetchInvoices = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
 
       const result = await invoiceServices.getMyInvoices();
 
-      if (result.success) {
-        setInvoices(result.invoices || []);
-      } else {
-        throw new Error(result.message || "Unable to fetch invoices.");
+      if (!result.success) {
+        throw new Error(
+          result.message || "Unable to fetch invoices."
+        );
       }
+
+      setInvoices(result.invoices || []);
     } catch (err) {
       console.error("Fetch invoices error:", err);
+
+      if (err.response?.status === 401) {
+        setError("Your session has expired. Please login again.");
+        return;
+      }
 
       setError(
         err.response?.data?.message ||
@@ -33,12 +49,22 @@ export default function MyInvoices() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchInvoices();
   }, []);
 
+  // Wait until authentication is initialized
+  useEffect(() => {
+    if (!authInitialized) return;
+
+    if (!isAuth) {
+      setLoading(false);
+      setError("Please login first.");
+      return;
+    }
+
+    fetchInvoices();
+  }, [authInitialized, isAuth, fetchInvoices]);
+
+  // Download invoice
   const handleDownload = async (invoice) => {
     try {
       setDownloadingId(invoice._id);
@@ -57,9 +83,16 @@ export default function MyInvoices() {
       link.click();
       link.remove();
 
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Download error:", err);
+
+      if (err.response?.status === 401) {
+        alert("Your session has expired. Please login again.");
+        navigate("/login");
+        return;
+      }
+
       alert(
         err.response?.data?.message ||
         "Unable to download invoice."
@@ -69,7 +102,8 @@ export default function MyInvoices() {
     }
   };
 
-  if (loading) {
+  // Wait for authentication check
+  if (!authInitialized || loading) {
     return (
       <div className="flex min-h-[300px] items-center justify-center gap-2">
         <LoaderCircle className="animate-spin" />
@@ -78,6 +112,23 @@ export default function MyInvoices() {
     );
   }
 
+  // Authentication error
+  if (!isAuth || error === "Please login first.") {
+    return (
+      <div className="p-6 text-center">
+        <p className="text-red-600">Please login first.</p>
+
+        <button
+          onClick={() => navigate("/login")}
+          className="mt-3 rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
+        >
+          Login
+        </button>
+      </div>
+    );
+  }
+
+  // Other errors
   if (error) {
     return (
       <div className="p-6 text-center">
@@ -85,7 +136,7 @@ export default function MyInvoices() {
 
         <button
           onClick={fetchInvoices}
-          className="mt-3 rounded-lg bg-indigo-600 px-4 py-2 text-white"
+          className="mt-3 rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
         >
           Try Again
         </button>
@@ -93,9 +144,13 @@ export default function MyInvoices() {
     );
   }
 
+  const totalAmount = invoices.reduce(
+    (sum, invoice) => sum + Number(invoice.totalAmount || 0),
+    0
+  );
+
   return (
     <section className="w-full min-w-0 p-4 md:p-6">
-
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">
           My Invoices
@@ -106,6 +161,7 @@ export default function MyInvoices() {
         </p>
       </div>
 
+      {/* Invoice statistics */}
       <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="rounded-xl border bg-white p-5">
           <p className="text-sm text-gray-500">
@@ -123,22 +179,16 @@ export default function MyInvoices() {
           </p>
 
           <h2 className="mt-2 text-2xl font-bold">
-            {invoices
-              .reduce(
-                (sum, invoice) =>
-                  sum + Number(invoice.totalAmount || 0),
-                0
-              )
-              .toLocaleString("en-IN", {
-                style: "currency",
-                currency: "INR",
-              })}
+            {totalAmount.toLocaleString("en-IN", {
+              style: "currency",
+              currency: "INR",
+            })}
           </h2>
         </div>
       </div>
 
+      {/* Invoice table */}
       <div className="overflow-x-auto rounded-xl border bg-white">
-
         {invoices.length === 0 ? (
           <div className="p-10 text-center">
             <FileText
@@ -156,7 +206,6 @@ export default function MyInvoices() {
           </div>
         ) : (
           <table className="w-full min-w-[750px] text-left text-sm">
-
             <thead className="bg-gray-50 text-gray-600">
               <tr>
                 <th className="p-4">Invoice Number</th>
@@ -170,8 +219,10 @@ export default function MyInvoices() {
 
             <tbody className="divide-y">
               {invoices.map((invoice) => (
-                <tr key={invoice._id} className="hover:bg-gray-50">
-
+                <tr
+                  key={invoice._id}
+                  className="hover:bg-gray-50"
+                >
                   <td className="p-4 font-semibold">
                     {invoice.invoiceNumber}
                   </td>
@@ -185,17 +236,21 @@ export default function MyInvoices() {
                   </td>
 
                   <td className="p-4 font-medium">
-                    {Number(invoice.totalAmount || 0)
-                      .toLocaleString("en-IN", {
+                    {Number(invoice.totalAmount || 0).toLocaleString(
+                      "en-IN",
+                      {
                         style: "currency",
                         currency: "INR",
-                      })}
+                      }
+                    )}
                   </td>
 
                   <td className="p-4">
-                    {new Date(invoice.createdAt).toLocaleDateString(
-                      "en-IN"
-                    )}
+                    {invoice.createdAt
+                      ? new Date(invoice.createdAt).toLocaleDateString(
+                          "en-IN"
+                        )
+                      : "-"}
                   </td>
 
                   <td className="p-4">
@@ -205,7 +260,10 @@ export default function MyInvoices() {
                       className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-white hover:bg-indigo-700 disabled:opacity-50"
                     >
                       {downloadingId === invoice._id ? (
-                        <LoaderCircle size={16} className="animate-spin" />
+                        <LoaderCircle
+                          size={16}
+                          className="animate-spin"
+                        />
                       ) : (
                         <Download size={16} />
                       )}
@@ -213,15 +271,12 @@ export default function MyInvoices() {
                       Download
                     </button>
                   </td>
-
                 </tr>
               ))}
             </tbody>
-
           </table>
         )}
       </div>
-
     </section>
   );
 }
