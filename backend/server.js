@@ -36,20 +36,8 @@ const corsOptions = {
   },
 
   credentials: true,
-
-  methods: [
-    "GET",
-    "POST",
-    "PUT",
-    "PATCH",
-    "DELETE",
-    "OPTIONS",
-  ],
-
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-  ],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 // Middleware
@@ -63,6 +51,14 @@ app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
     message: "Invoice Generator API is running",
+  });
+});
+
+// Temporary deployment test
+app.get("/test-auth", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Backend routing is working",
   });
 });
 
@@ -81,7 +77,6 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
-
   } catch (error) {
     console.error("Server startup failed:", error.message);
     process.exit(1);
