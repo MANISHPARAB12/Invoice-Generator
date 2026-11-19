@@ -1,0 +1,13 @@
+
+{
+  "rewrites": [
+    {
+      "source": "/auth/:path*",
+      "destination": "https://invoice-generator-backend-oe7x.onrender.com/auth/:path*"
+    },
+    {
+      "source": "/invoices/:path*",
+      "destination": "https://invoice-generator-backend-oe7x.onrender.com/invoices/:path*"
+    }
+  ]
+}
